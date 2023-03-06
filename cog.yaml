@@ -1,7 +1,13 @@
 build:
   gpu: true
+  system_packages:
+    - "python3-opencv"
+    # - "libgl1-mesa-glx"
+    # - "libglib2.0-0"
+
   python_version: "3.10"
   python_packages:
+    - "opencv-python-headless"
     - "diffusers==0.14.0"
     - "torch==1.13.0"
     - "ftfy==6.1.1"
@@ -10,7 +16,6 @@ build:
     - "accelerate==0.15.0"
     - "numpy"
     - "moviepy"
-    - "opencv-python-headless"
     - "controlnet_aux"
 
 predict: "predict.py:Predictor"
