@@ -1,10 +1,19 @@
 import os
 from typing import List
 
+import cv2
+import numpy as np
+
 import torch
+from torch import Tensor
+import moviepy
+from moviepy.editor import *
+
 from diffusers import (
     StableDiffusionPipeline,
     StableDiffusionImg2ImgPipeline,
+    StableDiffusionControlNetPipeline, 
+    ControlNetModel,
     PNDMScheduler,
     LMSDiscreteScheduler,
     DDIMScheduler,
@@ -15,7 +24,7 @@ from diffusers import (
 from PIL import Image
 from cog import BasePredictor, Input, Path
 
-MODEL_ID = "stabilityai/stable-diffusion-2-1"
+MODEL_ID = "stabilityai/stable-diffusion-1-5"
 MODEL_CACHE = "diffusers-cache"
 
 
@@ -26,17 +35,13 @@ class Predictor(BasePredictor):
         self.txt2img_pipe = StableDiffusionPipeline.from_pretrained(
             MODEL_ID,
             cache_dir=MODEL_CACHE,
-            local_files_only=True,
+            local_files_only=False,
         ).to("cuda")
-        self.img2img_pipe = StableDiffusionImg2ImgPipeline(
-            vae=self.txt2img_pipe.vae,
-            text_encoder=self.txt2img_pipe.text_encoder,
-            tokenizer=self.txt2img_pipe.tokenizer,
-            unet=self.txt2img_pipe.unet,
-            scheduler=self.txt2img_pipe.scheduler,
-            safety_checker=self.txt2img_pipe.safety_checker,
-            feature_extractor=self.txt2img_pipe.feature_extractor,
-        ).to("cuda")
+        self.controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16)
+        self.img2img_pipe = StableDiffusionControlNetPipeline.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", 
+            controlnet=self.controlnet, 
+            torch_dtype=torch.float16).to("cuda")
 
     @torch.inference_mode()
     def predict(
@@ -91,6 +96,15 @@ class Predictor(BasePredictor):
         if seed is None:
             seed = int.from_bytes(os.urandom(2), "big")
         print(f"Using seed: {seed}")
+        cannyinput = np.array(image)
+
+        low_threshold = 100
+        high_threshold = 200
+
+        image = cv2.Canny(image, low_threshold, high_threshold)
+        image = image[:, :, None]
+        image = np.concatenate([image, image, image], axis=2)
+        image = Image.fromarray(image)
 
         pipe = self.img2img_pipe
         extra_kwargs = {
@@ -98,24 +112,63 @@ class Predictor(BasePredictor):
             "strength": prompt_strength,
         }
         pipe.scheduler = make_scheduler(scheduler, pipe.scheduler.config)
+        prompts = prompt.split("|")
+        prompt_embedding_list = []
+        print(prompts)
+        for prompt in prompts:
+            print(f"getting embeddings for {prompt}")
+            text_inputs = self.txt2img_pipe.tokenizer(
+                prompt,
+                padding="max_length",
+                max_length=self.txt2img_pipe.tokenizer.model_max_length,
+                truncation=True,
+                return_tensors="pt",
+            )
+            text_input_ids = text_inputs.input_ids
+            prompt_embeds = self.txt2img_pipe.text_encoder(
+                text_input_ids.to("cuda"),
+            )[0]
+            prompt_embedding_list.append(prompt_embeds)
 
-        generator = torch.Generator("cuda").manual_seed(seed)
-        output = pipe(
-            prompt=[prompt] * num_outputs if prompt is not None else None,
-            guidance_scale=guidance_scale,
-            generator=generator,
-            num_inference_steps=num_inference_steps,
-            **extra_kwargs,
-        )
+        tweened_prompt_embeds = []
+        for i in range(0, len(prompt_embedding_list) - 1):
+            for j in np.arange(0, 1, 0.1):
+                print(f"tweening between {prompt_embedding_list[i]} and {prompt_embedding_list[i + 1]} with value {j}")
+                tweened_prompt_embeds.append(weighted_sum(prompt_embedding_list[i], prompt_embedding_list[i + 1], j))
 
         output_paths = []
-        for i, sample in enumerate(output.images):
-            output_path = f"/tmp/out-{i}.png"
-            sample.save(output_path)
-            output_paths.append(Path(output_path))
+        output_path_strings = []
+        i = 0
+        for embeds in tweened_prompt_embeds:
+            print(f"running {i} of {len(tweened_prompt_embeds)}")
+            generator = torch.Generator("cuda").manual_seed(seed)
+            output = pipe(
+                prompt=None,
+                guidance_scale=guidance_scale,
+                generator=generator,
+                num_inference_steps=num_inference_steps,
+                prompt_embeds=embeds,
+                **extra_kwargs,
+            )
 
-        return output_paths
+            for j, sample in enumerate(output.images):
+                output_path = f"/tmp/out-{i}.png"
+                i += 1
+                sample.save(output_path)
+                output_path_strings.append(output_path)
+                output_paths.append(Path(output_path))
+        
+        clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
+        concat_clip = concatenate_videoclips(clips, method="compose")
+        concat_clip.write_videofile(f"/tmp/test.mp4", fps=10)
+
+        return [Path("/tmp/test.mp4")]
+
+def weighted_sum(condA:Tensor, condB:Tensor, alpha:float) -> Tensor:
+    ''' linear interpolate on latent space of condition '''
+
+    return (1 - alpha) * condA + (alpha) * condB
 
 def make_scheduler(name, config):
     return {
