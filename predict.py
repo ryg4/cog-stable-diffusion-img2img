@@ -24,7 +24,7 @@ from diffusers import (
 from PIL import Image
 from cog import BasePredictor, Input, Path
 
-MODEL_ID = "stabilityai/stable-diffusion-1-5"
+MODEL_ID = "runwayml/stable-diffusion-v1-5"
 MODEL_CACHE = "diffusers-cache"
 
 
@@ -57,36 +57,11 @@ class Predictor(BasePredictor):
         image: Path = Input(
             description="Inital image to generate variations of.",
         ),
-        width: int = Input(
-            description="Width of output image. Maximum size is 1024x768 or 768x1024 because of memory limits",
-            choices=[128, 256, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024],
-            default=512,
-        ),
-        height: int = Input(
-            description="Height of output image. Maximum size is 1024x768 or 768x1024 because of memory limits",
-            choices=[128, 256, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024],
-            default=512,
-        ),
-        prompt_strength: float = Input(
-            description="Prompt strength when providing the image. 1.0 corresponds to full destruction of information in init image",
-            default=0.8,
-        ),
-        num_outputs: int = Input(
-            description="Number of images to output. Higher number of outputs may OOM.",
-            ge=1,
-            le=8,
-            default=1,
-        ),
         num_inference_steps: int = Input(
             description="Number of denoising steps", ge=1, le=500, default=25
         ),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance", ge=1, le=20, default=7.5
-        ),
-        scheduler: str = Input(
-            default="DPMSolverMultistep",
-            choices=["DDIM", "K_EULER", "DPMSolverMultistep", "K_EULER_ANCESTRAL", "PNDM", "KLMS"],
-            description="Choose a scheduler.",
         ),
         seed: int = Input(
             description="Random seed. Leave blank to randomize the seed", default=None
@@ -96,20 +71,20 @@ class Predictor(BasePredictor):
         if seed is None:
             seed = int.from_bytes(os.urandom(2), "big")
         print(f"Using seed: {seed}")
+        image = Image.open(image).convert("RGB")
         cannyinput = np.array(image)
 
         low_threshold = 100
         high_threshold = 200
 
-        image = cv2.Canny(image, low_threshold, high_threshold)
+        image = cv2.Canny(cannyinput, low_threshold, high_threshold)
         image = image[:, :, None]
         image = np.concatenate([image, image, image], axis=2)
         image = Image.fromarray(image)
 
         pipe = self.img2img_pipe
         extra_kwargs = {
-            "image": Image.open(image).convert("RGB"),
-            "strength": prompt_strength,
+            "image": image,
         }
         pipe.scheduler = make_scheduler(scheduler, pipe.scheduler.config)
         prompts = prompt.split("|")
@@ -156,7 +131,6 @@ class Predictor(BasePredictor):
                 i += 1
                 sample.save(output_path)
                 output_path_strings.append(output_path)
-                output_paths.append(Path(output_path))
         
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
