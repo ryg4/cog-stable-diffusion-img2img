@@ -1,6 +1,15 @@
 import os
 from typing import List
 
+os.system("git clone https://github.com/google-research/frame-interpolation")
+import sys
+
+sys.path.append("frame-interpolation")
+from eval import interpolator, util
+
+import tensorflow as tf
+import mediapy
+
 import cv2
 import numpy as np
 
@@ -8,6 +17,8 @@ import torch
 from torch import Tensor
 import moviepy
 from moviepy.editor import *
+
+from huggingface_hub import snapshot_download
 
 from diffusers import (
     StableDiffusionPipeline,
@@ -26,7 +37,19 @@ from cog import BasePredictor, Input, Path
 
 MODEL_ID = "runwayml/stable-diffusion-v1-5"
 MODEL_CACHE = "diffusers-cache"
+def load_model(model_name):
+    model = interpolator.Interpolator(snapshot_download(repo_id=model_name), None)
 
+    return model
+
+
+model_names = [
+    "akhaliq/frame-interpolation-film-style",
+    "NimaBoscarino/frame-interpolation_film_l1",
+    "NimaBoscarino/frame_interpolation_film_vgg",
+]
+
+models = {model_name: load_model(model_name) for model_name in model_names}
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -132,6 +155,8 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
+        frames = list(util.interpolate_recursively_from_files(output_path_strings, 2, models["akhaliq/frame-interpolation-film-style"]))
+
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
         concat_clip = concatenate_videoclips(clips, method="compose")
