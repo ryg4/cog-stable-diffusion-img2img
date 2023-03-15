@@ -1,8 +1,6 @@
 import os
 from typing import List
-import sys
 
-import tensorflow as tf
 import mediapy
 
 from eval import interpolator, util
