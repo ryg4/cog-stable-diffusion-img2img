@@ -19,6 +19,7 @@ build:
     - "moviepy"
     - "controlnet_aux"
     - "ipython==7.30.1"
+    - "typing_extensions==4.4.0"
     - "tensorflow==2.6.2" # The latest should include tensorflow-gpu
     - "tensorflow-datasets==4.4.0"
     - "tensorflow-addons==0.15.0"
@@ -27,7 +28,7 @@ build:
     - "parameterized==0.8.1"
     - "mediapy==1.0.3"
     - "scikit-image==0.19.1"
-    - "apache-beam==2.34.0"
+    - "apache-beam"
     - "google-cloud-bigquery-storage==1.1.0" # Suppresses a harmless error from beam
     - "natsort==8.1.0"
     - "image-tools"

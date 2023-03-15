@@ -5,11 +5,11 @@ os.system("git clone https://github.com/google-research/frame-interpolation")
 import sys
 
 sys.path.append("frame-interpolation")
-from eval import interpolator, util
 
 import tensorflow as tf
 import mediapy
 
+from eval import interpolator, util
 import cv2
 import numpy as np
 
