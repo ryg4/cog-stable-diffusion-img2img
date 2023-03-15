@@ -1,10 +1,6 @@
 import os
 from typing import List
-
-os.system("git clone https://github.com/google-research/frame-interpolation")
 import sys
-
-sys.path.append("frame-interpolation")
 
 import tensorflow as tf
 import mediapy
