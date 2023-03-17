@@ -33,7 +33,6 @@ MODEL_ID = "runwayml/stable-diffusion-v1-5"
 MODEL_CACHE = "diffusers-cache"
 def load_model(model_name):
     model = interpolator.Interpolator(snapshot_download(repo_id=model_name), None)
-
     return model
 
 
@@ -43,7 +42,7 @@ model_names = [
     "NimaBoscarino/frame_interpolation_film_vgg",
 ]
 
-models = {model_name: load_model(model_name) for model_name in model_names}
+interpModel = load_model(model_names[0])
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -77,8 +76,16 @@ class Predictor(BasePredictor):
         num_inference_steps: int = Input(
             description="Number of denoising steps", ge=1, le=500, default=25
         ),
+        num_interpolate_steps: int = Input(
+            description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=10, default=25
+        ),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance", ge=1, le=20, default=7.5
+        ),
+        scheduler: str = Input(
+            default="DPMSolverMultistep",
+            choices=["DDIM", "K_EULER", "DPMSolverMultistep", "K_EULER_ANCESTRAL", "PNDM", "KLMS"],
+            description="Choose a scheduler.",
         ),
         seed: int = Input(
             description="Random seed. Leave blank to randomize the seed", default=None
@@ -149,7 +156,7 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        frames = list(util.interpolate_recursively_from_files(output_path_strings, 2, models["akhaliq/frame-interpolation-film-style"]))
+        frames = list(util.interpolate_recursively_from_files(output_path_strings, num_interpolate_steps, interpModel))
 
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
