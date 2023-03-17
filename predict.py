@@ -2,8 +2,6 @@ import os
 import sys
 from typing import List
 
-import mediapy
-
 import cv2
 import numpy as np
 
