@@ -77,7 +77,7 @@ class Predictor(BasePredictor):
             description="Number of denoising steps", ge=1, le=500, default=25
         ),
         num_interpolate_steps: int = Input(
-            description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=10, default=25
+            description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=10, default=2
         ),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance", ge=1, le=20, default=7.5
