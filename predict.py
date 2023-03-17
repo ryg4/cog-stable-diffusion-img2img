@@ -1,11 +1,14 @@
 import os
+import sys
 from typing import List
 
 import mediapy
 
-from eval import interpolator, util
 import cv2
 import numpy as np
+
+os.system('git clone git@github.com:hzwer/Practical-RIFE.git')
+sys.path.append('Practical-RIFE')
 
 import torch
 from torch import Tensor
@@ -31,18 +34,6 @@ from cog import BasePredictor, Input, Path
 
 MODEL_ID = "runwayml/stable-diffusion-v1-5"
 MODEL_CACHE = "diffusers-cache"
-def load_model(model_name):
-    model = interpolator.Interpolator(snapshot_download(repo_id=model_name), None)
-    return model
-
-
-model_names = [
-    "akhaliq/frame-interpolation-film-style",
-    "NimaBoscarino/frame-interpolation_film_l1",
-    "NimaBoscarino/frame_interpolation_film_vgg",
-]
-
-interpModel = load_model(model_names[0])
 
 class Predictor(BasePredictor):
     def setup(self):
@@ -64,7 +55,7 @@ class Predictor(BasePredictor):
         self,
         prompt: str = Input(
             description="Input prompt",
-            default="A fantasy landscape, trending on artstation",
+            default="oil painting | charcoal drawing | oil painting",
         ),
         negative_prompt: str = Input(
             description="The prompt NOT to guide the image generation. Ignored when not using guidance",
@@ -156,7 +147,7 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        frames = list(util.interpolate_recursively_from_files(output_path_strings, num_interpolate_steps, interpModel))
+        os.system(f"python3 inference_video.py --multi={num_interpolate_steps} --img=/tmp/")
 
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
