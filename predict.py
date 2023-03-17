@@ -7,9 +7,6 @@ import mediapy
 import cv2
 import numpy as np
 
-os.system('git clone git@github.com:hzwer/Practical-RIFE.git')
-sys.path.append('Practical-RIFE')
-
 import torch
 from torch import Tensor
 import moviepy
