@@ -122,7 +122,7 @@ class Predictor(BasePredictor):
 
         tweened_prompt_embeds = []
         for i in range(0, len(prompt_embedding_list) - 1):
-            for j in np.arange(0, 1, 0.1):
+            for j in np.arange(0, 1, 1.0 / float(num_interpolate_steps)):
                 print(f"tweening between {prompt_embedding_list[i]} and {prompt_embedding_list[i + 1]} with value {j}")
                 tweened_prompt_embeds.append(weighted_sum(prompt_embedding_list[i], prompt_embedding_list[i + 1], j))
 
@@ -147,7 +147,7 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        os.system(f"python3 inference_video.py --multi={num_interpolate_steps} --img=/tmp/")
+        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/")
 
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
