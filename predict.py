@@ -143,24 +143,18 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/ --output=/tmp/test.mp4")
-        print()
-        os.system(f"ls .")
-        print()
-        os.system(f"ls /tmp")
-        print()
-        os.system(f"ls /tmp/imgs")
-        print()
-        os.system(f"ls /tmp/imgs")
-        print()
-        os.system(f"ls vid_out")
+        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/ --output=interp.mp4")
 
-        # clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
+        clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
+        concat_clip = concatenate_videoclips(clips, method="compose")
+        concat_clip.write_videofile(f"/tmp/uninterp.mp4", fps=10)
 
-        # concat_clip = concatenate_videoclips(clips, method="compose")
-        # concat_clip.write_videofile(f"/tmp/test.mp4", fps=10)
+        interped = os.listdir("vid_out")
+        clips = [ImageClip("vid_out" + m).set_duration(0.1) for m in interped]
+        concat_clip = concatenate_videoclips(clips, method="compose")
+        concat_clip.write_videofile(f"/tmp/interp.mp4", fps=10)
 
-        return [Path("/tmp/imgs")]
+        return [Path("/tmp/uninterp.mp4"), Path("/tmp/interp.mp4")]
 
 def weighted_sum(condA:Tensor, condB:Tensor, alpha:float) -> Tensor:
     ''' linear interpolate on latent space of condition '''
