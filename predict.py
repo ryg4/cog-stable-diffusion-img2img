@@ -143,12 +143,12 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/")
+        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/ --output=/tmp/test.mp4")
 
-        clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
+        # clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
-        concat_clip = concatenate_videoclips(clips, method="compose")
-        concat_clip.write_videofile(f"/tmp/test.mp4", fps=10)
+        # concat_clip = concatenate_videoclips(clips, method="compose")
+        # concat_clip.write_videofile(f"/tmp/test.mp4", fps=10)
 
         return [Path("/tmp/test.mp4")]
 
