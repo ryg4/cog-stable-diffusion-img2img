@@ -149,8 +149,8 @@ class Predictor(BasePredictor):
         concat_clip = concatenate_videoclips(clips, method="compose")
         concat_clip.write_videofile(f"/tmp/uninterp.mp4", fps=10)
 
-        interped = os.listdir("vid_out")
-        clips = [ImageClip("vid_out" + m).set_duration(0.1) for m in interped]
+        interped = os.listdir("vid_out").sort()
+        clips = [ImageClip("vid_out/" + m).set_duration(0.1) for m in interped]
         concat_clip = concatenate_videoclips(clips, method="compose")
         concat_clip.write_videofile(f"/tmp/interp.mp4", fps=10)
 
