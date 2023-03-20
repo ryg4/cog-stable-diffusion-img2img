@@ -124,6 +124,7 @@ class Predictor(BasePredictor):
         output_paths = []
         output_path_strings = []
         i = 0
+        os.system(f"mkdir /tmp/imgs")
         for embeds in tweened_prompt_embeds:
             print(f"running {i} of {len(tweened_prompt_embeds)}")
             generator = torch.Generator("cuda").manual_seed(seed)
