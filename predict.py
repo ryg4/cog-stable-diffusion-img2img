@@ -137,12 +137,12 @@ class Predictor(BasePredictor):
             )
 
             for j, sample in enumerate(output.images):
-                output_path = f"/tmp/{i}.png"
+                output_path = f"/tmp/imgs/{i}.png"
                 i += 1
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/")
+        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs")
 
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
