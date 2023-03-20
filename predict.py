@@ -144,9 +144,16 @@ class Predictor(BasePredictor):
                 output_path_strings.append(output_path)
         
         os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/ --output=/tmp/test.mp4")
+        print()
         os.system(f"ls .")
+        print()
         os.system(f"ls /tmp")
+        print()
         os.system(f"ls /tmp/imgs")
+        print()
+        os.system(f"ls /tmp/imgs")
+        print()
+        os.system(f"ls vid_out")
 
         # clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
 
