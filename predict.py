@@ -137,7 +137,7 @@ class Predictor(BasePredictor):
             )
 
             for j, sample in enumerate(output.images):
-                output_path = f"/tmp/out-{i}.png"
+                output_path = f"/tmp/{i}.png"
                 i += 1
                 sample.save(output_path)
                 output_path_strings.append(output_path)
