@@ -160,7 +160,7 @@ class Predictor(BasePredictor):
         # concat_clip = concatenate_videoclips(clips, method="compose")
         # concat_clip.write_videofile(f"/tmp/test.mp4", fps=10)
 
-        return [Path("test.mp4")]
+        return [Path("/tmp/imgs")]
 
 def weighted_sum(condA:Tensor, condB:Tensor, alpha:float) -> Tensor:
     ''' linear interpolate on latent space of condition '''
