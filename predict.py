@@ -141,24 +141,13 @@ class Predictor(BasePredictor):
             )
 
             for j, sample in enumerate(output.images):
-                output_path = f"/tmp/imgs/{i}.png"
+                output_path = f"/tmp/imgs/{i:05}.png"
                 i += 1
                 sample.save(output_path)
-                output_path_strings.append(output_path)
-        
+        os.system("rm -rf vid_out")
         os.system(f"python3 inference_video.py --exp={num_frame_interpolate_steps} --img=/tmp/imgs/ --output=interp.mp4")
-
-        clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
-        concat_clip = concatenate_videoclips(clips, method="compose")
-        concat_clip.write_videofile(f"/tmp/uninterp.mp4", fps=10)
-
-        interped = os.listdir("vid_out")
-        interped.sort()
-
-        clips = [ImageClip("vid_out/" + m).set_duration(0.1) for m in interped]
-        concat_clip = concatenate_videoclips(clips, method="compose")
-        concat_clip.write_videofile(f"/tmp/interp.mp4", fps=10)
-
+        os.system(f"ffmpeg -framerate 10 -pattern_type glob -i '/tmp/imgs/*.png' -c:v libx264 -pix_fmt yuv420p /tmp/uninterp.mp4")
+        os.system(f"ffmpeg -framerate 10 -pattern_type glob -i 'vid_out/*.png' -c:v libx264 -pix_fmt yuv420p /tmp/interp.mp4")
         return [Path("/tmp/uninterp.mp4"), Path("/tmp/interp.mp4")]
 
 def weighted_sum(condA:Tensor, condB:Tensor, alpha:float) -> Tensor:

@@ -3,6 +3,7 @@ build:
   cuda: "11.3"
   system_packages:
     - "python3-opencv"
+    - "ffmpeg"
 
   python_version: "3.9"
   python_packages:
