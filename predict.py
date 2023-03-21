@@ -63,7 +63,10 @@ class Predictor(BasePredictor):
             description="Number of denoising steps", ge=1, le=500, default=25
         ),
         num_interpolate_steps: int = Input(
-            description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=10, default=2
+            description="Number of prompt interpolation steps", ge=1, le=30, default=2
+        ),
+        num_frame_interpolate_steps: int = Input(
+            description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=30, default=2
         ),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance", ge=1, le=20, default=7.5
@@ -143,7 +146,7 @@ class Predictor(BasePredictor):
                 sample.save(output_path)
                 output_path_strings.append(output_path)
         
-        os.system(f"python3 inference_video.py --exp=4 --img=/tmp/imgs/ --output=interp.mp4")
+        os.system(f"python3 inference_video.py --exp={num_frame_interpolate_steps} --img=/tmp/imgs/ --output=interp.mp4")
 
         clips = [ImageClip(m).set_duration(0.1) for m in output_path_strings]
         concat_clip = concatenate_videoclips(clips, method="compose")
