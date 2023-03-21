@@ -39,7 +39,7 @@ class Predictor(BasePredictor):
             cache_dir=MODEL_CACHE,
             local_files_only=False,
         ).to("cuda")
-        self.controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16)
+        self.controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16, safety_checker=None)
         self.img2img_pipe = StableDiffusionControlNetPipeline.from_pretrained(
             "runwayml/stable-diffusion-v1-5", 
             controlnet=self.controlnet, 
@@ -67,6 +67,9 @@ class Predictor(BasePredictor):
         ),
         num_frame_interpolate_steps: int = Input(
             description="Number of recursive interpolation (creates 2^X frames)", ge=1, le=30, default=2
+        ),
+        output_framerate: int = Input(
+            description="Output framerate", ge=1, le=30, default=10
         ),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance", ge=1, le=20, default=7.5
