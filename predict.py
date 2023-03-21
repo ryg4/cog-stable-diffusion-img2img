@@ -39,7 +39,7 @@ class Predictor(BasePredictor):
             cache_dir=MODEL_CACHE,
             local_files_only=False,
         ).to("cuda")
-        self.controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16, safety_checker=None)
+        self.controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16, safety_checker=None, requires_safety_checker=False)
         self.img2img_pipe = StableDiffusionControlNetPipeline.from_pretrained(
             "runwayml/stable-diffusion-v1-5", 
             controlnet=self.controlnet, 
